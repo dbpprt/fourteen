@@ -64,6 +64,7 @@ class TelegramIntegration(Integration):
         for integration in self.integrations:
             await integration.register_telegram_commands(self.application)
 
+        # TODO: Retry if it fails
         await self.application.initialize()
         await self.application.start()
         await self.application.updater.start_polling()  # type: ignore

@@ -1,3 +1,4 @@
+data_dir: "./.data"
 scheduler:
   #_target_: apscheduler.schedulers.background.BackgroundScheduler
   #_target_: apscheduler.schedulers.blocking.BlockingScheduler

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from logging import Logger
-from typing import Optional
+from typing import Any, Optional
 
 import aiohttp
 import ujson
@@ -39,8 +39,14 @@ class EmsClient:
                 self.host, headers=self.headers, json_serialize=ujson.dumps
             )
 
-    def url(self, path: str) -> str:
-        return f"/api/{self.device_name}/{path}"
+    def url(self, path: Optional[str] = None) -> str:
+        return f"/api/{self.device_name}/{path}" if path else f"/api/{self.device_name}"
+
+    async def set_variable(self, variable: str, value: Any):
+        await self.create_session_if_necessary()
+
+        async with self.session.post(self.url(), json={"cmd": variable, "data": value}) as response:  # type: ignore
+            return await response.json()
 
     async def info(self) -> BoilerInfo:
         await self.create_session_if_necessary()
