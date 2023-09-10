@@ -3,7 +3,7 @@ from argparse import ArgumentParser
 
 from omegaconf import DictConfig, ListConfig, OmegaConf
 
-from lib.utils.instantiate import instantiate
+from src.utils.instantiate import instantiate
 
 
 def main(config: ListConfig | DictConfig) -> None:

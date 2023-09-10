@@ -10,10 +10,10 @@ scheduler:
       max_workers: 20
   job_defaults:
     coalesce: false
-    max_instances: 3
+    max_instances: 1
   timezone:
     _target_: pytz.timezone
     zone: Europe/Berlin
 integrations:
-  - _target_: lib.integrations.heating.heating.HeatingIntegration
+  - _target_: src.integrations.heating.heating.HeatingIntegration
     _partial_: true
