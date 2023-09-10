@@ -1,4 +1,8 @@
+omegaconf
+pytz
+apscheduler
 
 # dev dependencies
 pre-commit
 ruff
+black
