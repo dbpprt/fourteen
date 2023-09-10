@@ -19,6 +19,16 @@ scheduler:
     _target_: pytz.timezone
     zone: Europe/Berlin
 integrations:
+  - _target_: src.integrations.presence.PresenceIntegration
+    _partial_: true
+    host: 192.168.1.1
+    username: ${secret:dmse_username}
+    password: ${secret:dmse_password}
+    devices:
+      - name: "Dennis"
+        mac: ${secret:mac_dennis}
+      - name: "Shammi"
+        mac: ${secret:mac_shammi}
   - _target_: src.integrations.heating.HeatingIntegration
     _partial_: true
     boiler:
