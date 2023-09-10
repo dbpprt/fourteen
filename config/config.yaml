@@ -27,6 +27,8 @@ integrations:
       host: http://192.168.2.109/
       access_token: ${secret:heating_ems_esp_access_token}
       device_name: boiler
+      # TODO: Implement overrides
+    state_overrides: {}
   - _target_: src.integrations.telegram.TelegramIntegration
     _partial_: true
     bot_token: ${secret:telegram_bot_token}
