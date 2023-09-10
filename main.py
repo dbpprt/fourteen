@@ -1,29 +1,21 @@
+import os
 from argparse import ArgumentParser
 
-from apscheduler.executors.pool import ThreadPoolExecutor
-from apscheduler.jobstores.memory import MemoryJobStore
-from apscheduler.schedulers.background import BackgroundScheduler
 from omegaconf import DictConfig, ListConfig, OmegaConf
-from pytz import utc
 
-jobstores = {
-    "default": MemoryJobStore(),
-}
-executors = {
-    "default": ThreadPoolExecutor(20),
-}
-job_defaults = {"coalesce": False, "max_instances": 3}
+from lib.utils.instantiate import instantiate
 
 
 def main(config: ListConfig | DictConfig) -> None:
-    _scheduler = BackgroundScheduler(
-        jobstores=jobstores,
-        executors=executors,
-        job_defaults=job_defaults,
-        timezone=utc,
-    )
+    for integration in config.integrations:
+        integration = integration(scheduler=config.scheduler, config=config)
 
-    print(config)
+    print("Press Ctrl+{0} to exit".format("Break" if os.name == "nt" else "C"))
+
+    try:
+        config.scheduler.start()
+    except (KeyboardInterrupt, SystemExit):
+        pass
 
 
 def parse_config() -> ListConfig | DictConfig:
@@ -39,6 +31,7 @@ def parse_config() -> ListConfig | DictConfig:
     config = OmegaConf.load(params.config_file)
     cli_config = OmegaConf.from_cli()
     config = OmegaConf.merge(config, cli_config)
+    config = instantiate(config)
 
     return config
 

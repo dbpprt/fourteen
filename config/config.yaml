@@ -1,3 +1,19 @@
 scheduler:
+  #_target_: apscheduler.schedulers.background.BackgroundScheduler
+  _target_: apscheduler.schedulers.blocking.BlockingScheduler
   jobstores:
-    default: 
+    default:
+      _target_: apscheduler.jobstores.memory.MemoryJobStore
+  executors:
+    default:
+      _target_: apscheduler.executors.pool.ThreadPoolExecutor
+      max_workers: 20
+  job_defaults:
+    coalesce: false
+    max_instances: 3
+  timezone:
+    _target_: pytz.timezone
+    zone: Europe/Berlin
+integrations:
+  - _target_: lib.integrations.heating.heating.HeatingIntegration
+    _partial_: true

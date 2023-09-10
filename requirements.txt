@@ -1,6 +1,7 @@
 omegaconf
 pytz
 apscheduler
+rich
 
 # dev dependencies
 pre-commit
