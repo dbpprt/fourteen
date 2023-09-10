@@ -6,7 +6,13 @@ from omegaconf import DictConfig
 
 from src.integrations.base.integration import BaseIntegration, Integration
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
-from telegram.ext import Application, ApplicationBuilder, CommandHandler, ContextTypes
+from telegram.ext import (
+    Application,
+    ApplicationBuilder,
+    CommandHandler,
+    ContextTypes,
+    PicklePersistence,
+)
 
 
 class TelegramIntegration(Integration):
@@ -17,12 +23,20 @@ class TelegramIntegration(Integration):
         integrations: List[BaseIntegration],
         config: DictConfig,
         bot_token: str,
+        telegram_persistence_location: str,
     ):
         super().__init__(
             config=config, scheduler=scheduler, integrations=integrations, logger=logger
         )
 
-        self.application = ApplicationBuilder().token(bot_token).build()
+        persistence = PicklePersistence(filepath=telegram_persistence_location)
+        self.application = (
+            ApplicationBuilder()
+            .token(bot_token)
+            .persistence(persistence)
+            .arbitrary_callback_data(True)
+            .build()
+        )
 
         start_handler = CommandHandler("start", self.command_start)
         self.application.add_handler(start_handler)

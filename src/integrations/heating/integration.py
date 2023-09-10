@@ -5,12 +5,23 @@ from typing import List
 
 from apscheduler.schedulers.base import BaseScheduler
 from omegaconf import DictConfig
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
-from telegram.ext import Application, CommandHandler, ContextTypes
+from telegram import (
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    Update,
+)
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    ContextTypes,
+    ConversationHandler,
+    CallbackQueryHandler,
+)
 
 from src.integrations.base.integration import BaseIntegration, Integration
 from src.integrations.heating.utils.ems_client import BoilerInfo, EmsClient
 from src.utils.persistant_state import PersistentState
+import ujson
 
 
 @dataclass
@@ -21,6 +32,9 @@ class State:
     heating_curve_max_supply_temperature: int
     heating_curve_min_supply_temperature: int
     heating_curve_target_room_temperature: float
+
+
+EXPECT_BUTTON_CLICK = range(1)
 
 
 class HeatingIntegration(Integration):
@@ -115,10 +129,21 @@ class HeatingIntegration(Integration):
             f"Calculated target supply temperature: {self.target_supply_temperature}"
         )
 
+        if self.target_supply_temperature == 0:
+            self.logger.info("Target supply temperature is 0, not setting it!")
+            return
+
         response = await self.boiler.set_variable(
             "selflowtemp", self.target_supply_temperature
         )
-        self.logger.warning("Set target supply temperature, response: ", response)
+
+        self.logger.warning(
+            f"Set target supply temperature, response: {ujson.dumps(response)}"
+        )
+
+        if response["message"] != "OK":
+            self.logger.error("Failed to set target supply temperature")
+            # TODO: Notify user
 
     async def command_heating(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if self.last_boiler_info is None:
@@ -131,18 +156,28 @@ class HeatingIntegration(Integration):
         keyboard = [
             [
                 InlineKeyboardButton(
-                    f"Heating active: {self.last_boiler_info.heating_active}",
-                    callback_data="button",
+                    f"🔛 Heating active: {self.state.heating_active}",
+                    callback_data="toggle_heating_active",
                 ),
+            ],
+            [
                 InlineKeyboardButton(
-                    f"Flow temperature: {self.last_boiler_info.current_flow_temperature}°C",
-                    callback_data="button",
+                    f"🌡️ Flow temperature: {self.last_boiler_info.current_flow_temperature}°C",
+                    callback_data=".",
                 ),
+            ],
+            [
                 InlineKeyboardButton(
-                    f"Selected flow temperature: {self.last_boiler_info.selected_flow_temperature}°C",
-                    callback_data="button",
+                    f"🌡️ Selected flow temperature: {self.last_boiler_info.selected_flow_temperature}°C",
+                    callback_data=".",
                 ),
-            ]
+            ],
+            [
+                InlineKeyboardButton(
+                    f"🌡️ Calculated flow temperature: {self.target_supply_temperature}°C",
+                    callback_data=".",
+                ),
+            ],
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -151,8 +186,39 @@ class HeatingIntegration(Integration):
             reply_markup=reply_markup,
         )
 
+        return EXPECT_BUTTON_CLICK
+
+    async def cancel(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+        return ConversationHandler.END
+
+    async def button_clicked_toggle_heating(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> int:
+        """Show new choice of buttons"""
+        query = update.callback_query
+        await query.answer()  # type: ignore
+        self.state.heating_active = not self.state.heating_active
+        await self.persistant_state.set(self.state)
+        self.logger.info(f"Set heating_active to {self.state.heating_active}")
+        await query.edit_message_text(  # type: ignore
+            text=f"Ok! Heating is now {'on' if self.state.heating_active else 'off'}"
+        )
+        return ConversationHandler.END
+
     async def register_telegram_commands(self, application: Application):
-        application.add_handler(CommandHandler("heating", self.command_heating))
+        conversation_handler = ConversationHandler(
+            entry_points=[CommandHandler("heating", self.command_heating)],
+            states={
+                EXPECT_BUTTON_CLICK: [
+                    CallbackQueryHandler(
+                        self.button_clicked_toggle_heating,
+                        pattern="^toggle_heating_active$",
+                    ),
+                ],
+            },
+            fallbacks=[CommandHandler("cancel", self.cancel)],
+        )
+        application.add_handler(conversation_handler)
         return await super().register_telegram_commands(application=application)
 
     async def shutdown(self):

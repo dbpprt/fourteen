@@ -3,7 +3,7 @@ pytz
 apscheduler
 rich
 ujson
-python-telegram-bot
+python-telegram-bot[callback-data]
 asyncio
 aiofiles 
 aiohttp[speedups]

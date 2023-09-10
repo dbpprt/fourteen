@@ -30,3 +30,4 @@ integrations:
   - _target_: src.integrations.telegram.TelegramIntegration
     _partial_: true
     bot_token: ${secret:telegram_bot_token}
+    telegram_persistence_location: ${data_dir}/telegram_persistence
