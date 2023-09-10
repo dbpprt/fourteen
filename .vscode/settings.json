@@ -1,0 +1,27 @@
+{
+    "files.eol": "\n",
+    // python env settings
+    "python.terminal.activateEnvironment": true,
+    "python.analysis.typeCheckingMode": "basic",
+    // python formatting
+    "[python]": {
+        "editor.codeActionsOnSave": {
+            "source.fixAll.ruff": true,
+            "source.organizeImports.ruff": true
+        }
+    },
+    "python.formatting.provider": "black",
+    "[json]": {
+        "editor.formatOnSave": true,
+    },
+    "[yaml]": {
+        "editor.formatOnSave": true,
+    },
+    // default language server
+    "python.languageServer": "Pylance",
+    
+    // editor settings
+    "editor.detectIndentation": false,
+    "editor.insertSpaces": true,
+    "editor.tabSize": 4
+}

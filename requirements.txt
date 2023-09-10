@@ -1,0 +1,4 @@
+
+# dev dependencies
+pre-commit
+ruff
