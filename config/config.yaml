@@ -1,13 +1,16 @@
 scheduler:
   #_target_: apscheduler.schedulers.background.BackgroundScheduler
-  _target_: apscheduler.schedulers.blocking.BlockingScheduler
+  #_target_: apscheduler.schedulers.blocking.BlockingScheduler
+  _target_: apscheduler.schedulers.asyncio.AsyncIOScheduler
   jobstores:
     default:
       _target_: apscheduler.jobstores.memory.MemoryJobStore
   executors:
+    # default:
+    #   _target_: apscheduler.executors.pool.ThreadPoolExecutor
+    #   max_workers: 20
     default:
-      _target_: apscheduler.executors.pool.ThreadPoolExecutor
-      max_workers: 20
+      _target_: apscheduler.executors.asyncio.AsyncIOExecutor
   job_defaults:
     coalesce: false
     max_instances: 1
@@ -15,5 +18,14 @@ scheduler:
     _target_: pytz.timezone
     zone: Europe/Berlin
 integrations:
-  - _target_: src.integrations.heating.heating.HeatingIntegration
+  - _target_: src.integrations.heating.HeatingIntegration
     _partial_: true
+    boiler:
+      _target_: src.integrations.heating.EmsClient
+      logger: ${logger}
+      host: http://192.168.2.109/
+      access_token: ${secret:heating_ems_esp_access_token}
+      device_name: boiler
+  - _target_: src.integrations.telegram.TelegramIntegration
+    _partial_: true
+    bot_token: ${secret:telegram_bot_token}

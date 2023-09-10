@@ -2,7 +2,10 @@ omegaconf
 pytz
 apscheduler
 rich
-requests
+aiohttp[speedups]
+ujson
+python-telegram-bot
+asyncio
 
 # dev dependencies
 pre-commit

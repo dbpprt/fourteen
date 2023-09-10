@@ -1,5 +1,17 @@
-{
+    {
     "configurations": [
+        {
+            "name": "main.py --debug",
+            "type": "python",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "program": "main.py",
+            "args": ["--debug"],
+            "console": "integratedTerminal",
+            "env": {
+                // "PYTHONPATH": "../../"
+            }
+        },
         {
             "name": "main.py",
             "type": "python",
