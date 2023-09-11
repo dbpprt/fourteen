@@ -114,10 +114,18 @@ class HeatingIntegration(Integration):
 
         target_room_temperature = self.state.heating_curve_target_room_temperature
         now = datetime.now(tz=self.scheduler.timezone)
-        # check if we are in the night time
+        # check if we are in the night time (hours and minutes)
         if (
             now.hour < self.state.heating_curve_day_start_hour
             or now.hour > self.state.heating_curve_day_end_hour
+            or (
+                now.hour == self.state.heating_curve_day_start_hour
+                and now.minute < self.state.heating_curve_day_start_minute
+            )
+            or (
+                now.hour == self.state.heating_curve_day_end_hour
+                and now.minute > self.state.heating_curve_day_end_minute
+            )
         ):
             target_room_temperature = (
                 self.state.heating_curve_target_night_room_temperature
@@ -196,19 +204,19 @@ class HeatingIntegration(Integration):
             [
                 InlineKeyboardButton(
                     f"🌡️ Flow temperature: {self.last_boiler_info.current_flow_temperature}°C",
-                    callback_data=".",
+                    callback_data="not_supported",
                 ),
             ],
             [
                 InlineKeyboardButton(
                     f"🌡️ Selected flow temperature: {self.last_boiler_info.selected_flow_temperature}°C",
-                    callback_data=".",
+                    callback_data="not_supported",
                 ),
             ],
             [
                 InlineKeyboardButton(
                     f"🌡️ Calculated flow temperature: {self.target_supply_temperature}°C",
-                    callback_data=".",
+                    callback_data="not_supported",
                 ),
             ],
             [
@@ -232,8 +240,12 @@ class HeatingIntegration(Integration):
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
+        last_refreshed_seconds_ago = (
+            datetime.now() - self.last_boiler_info_timestamp
+        ).seconds
+
         await update.message.reply_text(  # type: ignore
-            "Data has been refreshed xxx seconds ago:",
+            f"Data has been refreshed {last_refreshed_seconds_ago} seconds ago:",
             reply_markup=reply_markup,
         )
 
@@ -265,6 +277,14 @@ class HeatingIntegration(Integration):
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> int:
         key: str = update.message.text  # type: ignore
+
+        # if key not in self.state abort
+        if not hasattr(self.state, key):
+            await update.message.reply_text(  # type: ignore
+                f"Sorry, {key} is not a valid key!"
+            )
+            return ConversationHandler.END
+
         context.user_data["key"] = key  # type: ignore
         await update.message.reply_text(  # type: ignore
             f"Ok, what should the new value for {key} be? It is currently {getattr(self.state, key)}"
@@ -307,6 +327,16 @@ class HeatingIntegration(Integration):
         return ConversationHandler.END
 
     async def cancel(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+        return ConversationHandler.END
+
+    async def not_supported(
+        self, update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> int:
+        query = update.callback_query
+        await query.answer()  # type: ignore
+        await query.edit_message_text(  # type: ignore
+            text="Oops, this is not supported yet..."
+        )
         return ConversationHandler.END
 
     async def button_clicked_toggle_heating(
@@ -362,6 +392,10 @@ class HeatingIntegration(Integration):
                     CallbackQueryHandler(
                         self.edit_persistent_state,
                         pattern="^edit_persistent_state$",
+                    ),
+                    CallbackQueryHandler(
+                        self.not_supported,
+                        pattern="^not_supported$",
                     ),
                 ],
                 EXPECT_STATE_KEY: [

@@ -21,6 +21,7 @@ scheduler:
 integrations:
   - _target_: src.integrations.presence.PresenceIntegration
     _partial_: true
+    state_overrides: {}
     host: 192.168.1.1
     username: ${secret:dmse_username}
     password: ${secret:dmse_password}
@@ -31,6 +32,7 @@ integrations:
         mac: ${secret:mac_shammi}
   - _target_: src.integrations.heating.HeatingIntegration
     _partial_: true
+    state_overrides: {}
     boiler:
       _target_: src.integrations.heating.EmsClient
       logger: ${logger}
@@ -38,7 +40,6 @@ integrations:
       access_token: ${secret:heating_ems_esp_access_token}
       device_name: boiler
       # TODO: Implement overrides
-    state_overrides: {}
   - _target_: src.integrations.telegram.TelegramIntegration
     _partial_: true
     bot_token: ${secret:telegram_bot_token}

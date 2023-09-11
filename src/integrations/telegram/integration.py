@@ -5,7 +5,7 @@ from apscheduler.schedulers.base import BaseScheduler
 from omegaconf import DictConfig
 
 from src.integrations.base.integration import BaseIntegration, Integration
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram import Update
 from telegram.ext import (
     Application,
     ApplicationBuilder,
@@ -38,40 +38,16 @@ class TelegramIntegration(Integration):
             .build()
         )
 
-        start_handler = CommandHandler("start", self.command_start)
-        self.application.add_handler(start_handler)
-
-        # status_handler = CommandHandler("status", self.command_status)
-        # self.application.add_handler(status_handler)
-
-        # heating_handler = CommandHandler("heating", self.command_heating)
-        # self.application.add_handler(heating_handler)
-
         scheduler.add_job(self.start)
 
     async def command_status(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_message(
             chat_id=update.effective_chat.id,  # type: ignore
-            text="The overall system status is: OK",
-        )
-
-    async def command_start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        keyboard = [
-            [
-                InlineKeyboardButton("1", callback_data="1"),
-                InlineKeyboardButton("2", callback_data="2"),
-            ]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-
-        await context.bot.send_message(
-            chat_id=update.effective_chat.id,  # type: ignore
-            text="I'm a bot, please talk to me!",
-            reply_markup=reply_markup,
+            text="Your chat id is: {}".format(update.effective_chat.id),  # type: ignore
         )
 
     async def register_telegram_commands(self, application: Application):
-        application.add_handler(CommandHandler("start", self.command_start))
+        application.add_handler(CommandHandler("status", self.command_status))
         return await super().register_telegram_commands(application=application)
 
     async def start(self):
