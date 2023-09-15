@@ -159,7 +159,7 @@ class HeatingIntegration(Integration):
             # Only used for informational purposes!
             self.last_boiler_info_timestamp = datetime.now()
             self.last_ems_error = None
-            self.logger.info("Retrieved boiler_info", boiler_info)
+            self.logger.info("Retrieved boiler_info {}".format(yaml.dump(boiler_info)))
         except Exception as e:
             self.last_ems_error = e
             self.logger.exception("Failed to retrieve boiler_info")
