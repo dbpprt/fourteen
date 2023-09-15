@@ -19,6 +19,14 @@ scheduler:
     _target_: pytz.timezone
     zone: Europe/Berlin
 integrations:
+  - _target_: src.integrations.esphome.ESPHomeIntegration
+    _partial_: true
+    state_overrides: {}
+    devices:
+      - # a1t-doom
+        host: 192.168.2.150
+        encryption_key: ${secret:esphome_encryption_key}
+
   - _target_: src.integrations.presence.PresenceIntegration
     _partial_: true
     state_overrides: {}

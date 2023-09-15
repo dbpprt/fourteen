@@ -74,12 +74,12 @@ class HeatingIntegration(Integration):
         )
 
     async def initialize(self):
-        self.persistant_state: PersistentState[State] = PersistentState(
+        self.persistent_state: PersistentState[State] = PersistentState(
             "heating", self.config.data_dir
         )
 
         # default values for heating state
-        await self.persistant_state.initialize(
+        await self.persistent_state.initialize(
             State(
                 heating_active=False,
                 heating_curve_inclination=1.1,
@@ -95,7 +95,7 @@ class HeatingIntegration(Integration):
             )
         )
 
-        self.state: State = await self.persistant_state.get()
+        self.state: State = await self.persistent_state.get()
         # override state with values from config
         for key, value in self.state_overrides.items():
             setattr(self.state, str(key), value)
@@ -318,7 +318,7 @@ class HeatingIntegration(Integration):
             )
         else:
             setattr(self.state, key, new_value)
-            await self.persistant_state.set(self.state)
+            await self.persistent_state.set(self.state)
 
             await update.message.reply_text(  # type: ignore
                 f"Ok, setting {key} from {old_value} to {value}..."
@@ -345,7 +345,7 @@ class HeatingIntegration(Integration):
         query = update.callback_query
         await query.answer()  # type: ignore
         self.state.heating_active = not self.state.heating_active
-        await self.persistant_state.set(self.state)
+        await self.persistent_state.set(self.state)
         self.logger.info(f"Set heating_active to {self.state.heating_active}")
         await query.edit_message_text(  # type: ignore
             text=f"Ok! Heating is now {'on' if self.state.heating_active else 'off'}..."
