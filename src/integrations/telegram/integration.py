@@ -1,16 +1,13 @@
 from logging import Logger
-from typing import List
+from typing import Callable, List, Optional
 
 from apscheduler.schedulers.base import BaseScheduler
 from omegaconf import DictConfig
 
-from src.integrations.base.integration import BaseIntegration, Integration
-from telegram import Update
+from src.integrations.base import BaseIntegration, Integration, TelegramHandler
 from telegram.ext import (
     Application,
     ApplicationBuilder,
-    CommandHandler,
-    ContextTypes,
     PicklePersistence,
 )
 
@@ -18,15 +15,20 @@ from telegram.ext import (
 class TelegramIntegration(Integration):
     def __init__(
         self,
-        logger: Logger,
+        config: DictConfig,
         scheduler: BaseScheduler,
         integrations: List[BaseIntegration],
-        config: DictConfig,
+        logger: Logger,
+        telegram_handler: Optional[Callable[..., TelegramHandler]],
         bot_token: str,
         telegram_persistence_location: str,
     ):
         super().__init__(
-            config=config, scheduler=scheduler, integrations=integrations, logger=logger
+            config=config,
+            scheduler=scheduler,
+            integrations=integrations,
+            logger=logger,
+            telegram_handler=telegram_handler,
         )
 
         persistence = PicklePersistence(filepath=telegram_persistence_location)
@@ -40,14 +42,7 @@ class TelegramIntegration(Integration):
 
         scheduler.add_job(self.start)
 
-    async def command_status(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        await context.bot.send_message(
-            chat_id=update.effective_chat.id,  # type: ignore
-            text="Your chat id is: {}".format(update.effective_chat.id),  # type: ignore
-        )
-
     async def register_telegram_commands(self, application: Application):
-        application.add_handler(CommandHandler("status", self.command_status))
         return await super().register_telegram_commands(application=application)
 
     async def start(self):

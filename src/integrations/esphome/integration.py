@@ -1,11 +1,12 @@
 from datetime import datetime
 from logging import Logger
-from typing import List
+from typing import Callable, List, Optional
 from apscheduler.schedulers.base import BaseScheduler
 from omegaconf import DictConfig, ListConfig
 from src.integrations.esphome.utils.device import ESPHomeDevice
 
 from src.integrations.base.integration import BaseIntegration, Integration
+from src.integrations.base.telegram_handler import TelegramHandler
 from telegram.ext import (
     Application,
 )
@@ -14,15 +15,20 @@ from telegram.ext import (
 class ESPHomeIntegration(Integration):
     def __init__(
         self,
-        logger: Logger,
+        config: DictConfig,
         scheduler: BaseScheduler,
         integrations: List[BaseIntegration],
-        config: DictConfig,
+        logger: Logger,
+        telegram_handler: Optional[Callable[..., TelegramHandler]],
         state_overrides: DictConfig,
         devices: ListConfig,
     ):
         super().__init__(
-            config=config, scheduler=scheduler, integrations=integrations, logger=logger
+            config=config,
+            scheduler=scheduler,
+            integrations=integrations,
+            logger=logger,
+            telegram_handler=telegram_handler,
         )
 
         self.state_overrides = state_overrides

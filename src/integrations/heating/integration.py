@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from logging import Logger
-from typing import List
+from typing import Callable, List, Optional
 
 from apscheduler.schedulers.base import BaseScheduler
 from omegaconf import DictConfig
@@ -22,7 +22,7 @@ from telegram.ext import (
 )
 import yaml
 
-from src.integrations.base.integration import BaseIntegration, Integration
+from src.integrations.base import BaseIntegration, Integration, TelegramHandler
 from src.integrations.heating.utils.ems_client import BoilerInfo, EmsClient
 from src.utils.persistant_state import PersistentState
 import ujson
@@ -49,15 +49,20 @@ EXPECT_BUTTON_CLICK, EXPECT_STATE_KEY, EXPECT_STATE_VALUE = range(3)
 class HeatingIntegration(Integration):
     def __init__(
         self,
-        logger: Logger,
+        config: DictConfig,
         scheduler: BaseScheduler,
         integrations: List[BaseIntegration],
-        config: DictConfig,
+        logger: Logger,
+        telegram_handler: Optional[Callable[..., TelegramHandler]],
         boiler: EmsClient,
         state_overrides: DictConfig,
     ):
         super().__init__(
-            config=config, scheduler=scheduler, integrations=integrations, logger=logger
+            config=config,
+            scheduler=scheduler,
+            integrations=integrations,
+            logger=logger,
+            telegram_handler=telegram_handler,
         )
 
         self.boiler = boiler

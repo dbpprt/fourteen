@@ -1,10 +1,10 @@
 from logging import Logger
-from typing import List
+from typing import Callable, List, Optional
 
 from apscheduler.schedulers.base import BaseScheduler
 from omegaconf import DictConfig
 
-from src.integrations.base.integration import BaseIntegration, Integration
+from src.integrations.base import BaseIntegration, Integration, TelegramHandler
 from telegram.ext import (
     Application,
 )
@@ -13,13 +13,18 @@ from telegram.ext import (
 class HistoryIntegration(Integration):
     def __init__(
         self,
-        logger: Logger,
+        config: DictConfig,
         scheduler: BaseScheduler,
         integrations: List[BaseIntegration],
-        config: DictConfig,
+        logger: Logger,
+        telegram_handler: Optional[Callable[..., TelegramHandler]],
     ):
         super().__init__(
-            config=config, scheduler=scheduler, integrations=integrations, logger=logger
+            config=config,
+            scheduler=scheduler,
+            integrations=integrations,
+            logger=logger,
+            telegram_handler=telegram_handler,
         )
 
         # scheduler.add_job(self.start)
