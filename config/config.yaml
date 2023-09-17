@@ -30,33 +30,36 @@ integrations:
         host: 192.168.2.150
         encryption_key: ${secret:esphome_encryption_key}
 
-  # - _target_: src.integrations.presence.PresenceIntegration
-  #   _partial_: true
-  #   telegram_handler:
-  #     _target_: src.integrations.base.NoopTelegramHandler
-  #   state_overrides: {}
-  #   host: 192.168.1.1
-  #   username: ${secret:dmse_username}
-  #   password: ${secret:dmse_password}
-  #   devices:
-  #     - name: "Dennis"
-  #       mac: ${secret:mac_dennis}
-  #     - name: "Shammi"
-  #       mac: ${secret:mac_shammi}
-  # - _target_: src.integrations.heating.HeatingIntegration
-  #   _partial_: true
-  #   telegram_handler:
-  #     _target_: src.integrations.base.NoopTelegramHandler
-  #   state_overrides: {}
-  #   boiler:
-  #     _target_: src.integrations.heating.EmsClient
-  #     logger: ${logger}
-  #     host: http://192.168.2.109/
-  #     access_token: ${secret:heating_ems_esp_access_token}
-  #     device_name: boiler
-  #     # TODO: Implement overrides
+  - _target_: src.integrations.presence.PresenceIntegration
+    _partial_: true
+    telegram_handler:
+      _target_: src.integrations.presence.PresenceTelegramHandler
+      _partial_: true
+    state_overrides: {}
+    host: 192.168.1.1
+    username: ${secret:dmse_username}
+    password: ${secret:dmse_password}
+    devices:
+      - name: "Dennis"
+        mac: ${secret:mac_dennis}
+      - name: "Shammi"
+        mac: ${secret:mac_shammi}
+  - _target_: src.integrations.heating.HeatingIntegration
+    _partial_: true
+    telegram_handler:
+      _target_: src.integrations.heating.HeatingTelegramHandler
+      _partial_: true
+    state_overrides: {}
+    boiler:
+      _target_: src.integrations.heating.EmsClient
+      logger: ${logger}
+      host: http://192.168.2.109/
+      access_token: ${secret:heating_ems_esp_access_token}
+      device_name: boiler
   - _target_: src.integrations.telegram.TelegramIntegration
     _partial_: true
-    telegram_handler: null
+    telegram_handler:
+      _target_: src.integrations.telegram.DefaultTelegramHandler
+      _partial_: true
     bot_token: ${secret:telegram_bot_token}
     telegram_persistence_location: ${data_dir}/telegram_persistence

@@ -6,7 +6,6 @@ from omegaconf import DictConfig
 
 from src.integrations.base import BaseIntegration, Integration, TelegramHandler
 from telegram.ext import (
-    Application,
     ApplicationBuilder,
     PicklePersistence,
 )
@@ -41,9 +40,6 @@ class TelegramIntegration(Integration):
         )
 
         scheduler.add_job(self.start)
-
-    async def register_telegram_commands(self, application: Application):
-        return await super().register_telegram_commands(application=application)
 
     async def start(self):
         for integration in self.integrations:

@@ -2,25 +2,15 @@ from dataclasses import dataclass
 from datetime import datetime
 from logging import Logger
 from typing import Callable, List, Optional
+
+import asyncssh
+from apscheduler.schedulers.base import BaseScheduler
+from omegaconf import DictConfig, ListConfig
 from telegram import (
     Bot,
-    InlineKeyboardButton,
-    InlineKeyboardMarkup,
-    Update,
 )
-from telegram.ext import (
-    Application,
-    CommandHandler,
-    ContextTypes,
-    ConversationHandler,
-    CallbackQueryHandler,
-)
-from apscheduler.schedulers.base import BaseScheduler
-import asyncssh
-from omegaconf import DictConfig, ListConfig
 
 from src.integrations.base import BaseIntegration, Integration, TelegramHandler
-
 from src.utils.persistant_state import PersistentState
 
 
@@ -34,9 +24,6 @@ class State:
 
     vacation_mode: bool
     persons: List[Person]
-
-
-EXPECT_BUTTON_CLICK = range(1)
 
 
 class PresenceIntegration(Integration):
@@ -160,110 +147,6 @@ class PresenceIntegration(Integration):
 
     #     # TODO: Build this...
     #     return 0
-
-    async def command_presence(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
-    ):
-        keyboard: List[List[InlineKeyboardButton]] = []
-
-        for person in self.state.persons:
-            # calculate minutes since last seen
-
-            last_seen: int = -1
-            if person.last_seen is not None:
-                last_seen = (
-                    datetime.now(self.scheduler.timezone) - person.last_seen
-                ).seconds // 60
-                # round to full minutes
-                last_seen = last_seen - (last_seen % 1)
-
-            if last_seen == -1:
-                last_seen_message = "never"
-            elif last_seen == 0:
-                last_seen_message = "just now"
-            elif last_seen >= 1:  # noqa
-                last_seen_message = f"{last_seen} minutes ago"
-            else:
-                last_seen_message = "unknown"
-
-            keyboard.append(
-                [
-                    InlineKeyboardButton(
-                        f'👤 {person.name} is {"home" if person.present else "not home"} ({last_seen_message})',
-                        callback_data=f"toggle_person_{person.name}",
-                    ),
-                ]
-            )
-
-        # add vacation mode toggle
-        keyboard.append(
-            [
-                InlineKeyboardButton(
-                    f"🏖 Vacation mode is {'on' if self.state.vacation_mode else 'off'}",
-                    callback_data="toggle_vacation_mode",
-                ),
-            ]
-        )
-
-        reply_markup = InlineKeyboardMarkup(keyboard)
-
-        await update.message.reply_text(  # type: ignore
-            "Let's see who's home!",
-            reply_markup=reply_markup,
-        )
-
-        return EXPECT_BUTTON_CLICK
-
-    async def callback_toggle_person(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
-    ) -> int:
-        query = update.callback_query
-        await query.answer()  # type: ignore
-        await query.edit_message_text(  # type: ignore
-            text="Oops, there is no way to toggle presence yet..."
-        )
-        return ConversationHandler.END
-
-    async def toggle_vacation_mode(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
-    ) -> int:
-        query = update.callback_query
-        await query.answer()  # type: ignore
-        self.state.vacation_mode = not self.state.vacation_mode
-        await self.persistant_state.set(self.state)
-
-        if self.state.vacation_mode:
-            await query.edit_message_text(  # type: ignore
-                text="Vacation mode is now on, enjoy your trip! 🏖"
-            )
-            return ConversationHandler.END
-        else:
-            await query.edit_message_text(  # type: ignore
-                text="Vacation mode is now off, welcome back! 🏡"
-            )
-            return ConversationHandler.END
-
-    async def register_telegram_commands(self, application: Application):
-        application.add_handler(
-            ConversationHandler(
-                entry_points=[
-                    CommandHandler("presence", self.command_presence),
-                ],
-                states={
-                    EXPECT_BUTTON_CLICK: [
-                        CallbackQueryHandler(
-                            self.callback_toggle_person, pattern="^toggle_person_*"
-                        ),
-                        CallbackQueryHandler(
-                            self.toggle_vacation_mode, pattern="^toggle_vacation_mode$"
-                        ),
-                    ],
-                },
-                fallbacks=[],
-            )
-        )
-        self.bot: Optional[Bot] = application.bot
-        return await super().register_telegram_commands(application=application)
 
     async def shutdown(self):
         return await super().shutdown()

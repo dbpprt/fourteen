@@ -39,13 +39,13 @@ class Integration(BaseIntegration, ABC):
 
         super().__init__()
 
-    async def register_telegram_commands(self, application: Application):
+    async def register_telegram_commands(self, application: Application) -> None:
         if self.telegram_handler:
-            return await self.telegram_handler.register_telegram_commands(
+            await self.telegram_handler.register_telegram_commands(
                 application=application
             )
         else:
-            return await super().register_telegram_commands(application=application)
+            await super().register_telegram_commands(application=application)
 
     @abstractmethod
     async def shutdown(self):

@@ -1,8 +1,9 @@
 from logging import Logger
-from src.integrations.base import TelegramHandler
 
-from src.integrations.esphome import ESPHomeIntegration
 from telegram.ext import Application
+
+from src.integrations.base import TelegramHandler
+from src.integrations.esphome import ESPHomeIntegration
 
 
 class ESPHomeTelegramHandler(TelegramHandler[ESPHomeIntegration]):
@@ -10,5 +11,5 @@ class ESPHomeTelegramHandler(TelegramHandler[ESPHomeIntegration]):
         self.logger = logger
         self.integration = integration
 
-    async def register_telegram_commands(self, application: Application):
-        return await super().register_telegram_commands(application=application)
+    async def register_telegram_commands(self, application: Application) -> None:
+        await super().register_telegram_commands(application=application)

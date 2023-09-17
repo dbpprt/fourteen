@@ -1,15 +1,13 @@
 from datetime import datetime
 from logging import Logger
 from typing import Callable, List, Optional
+
 from apscheduler.schedulers.base import BaseScheduler
 from omegaconf import DictConfig, ListConfig
-from src.integrations.esphome.utils.device import ESPHomeDevice
 
 from src.integrations.base.integration import BaseIntegration, Integration
 from src.integrations.base.telegram_handler import TelegramHandler
-from telegram.ext import (
-    Application,
-)
+from src.integrations.esphome.utils.device import ESPHomeDevice
 
 
 class ESPHomeIntegration(Integration):
@@ -57,9 +55,6 @@ class ESPHomeIntegration(Integration):
                 self.scheduler.add_job(device.initialize)
             else:
                 self.scheduler.add_job(device.heartbeat)
-
-    async def register_telegram_commands(self, application: Application):
-        return await super().register_telegram_commands(application=application)
 
     async def shutdown(self):
         return await super().shutdown()

@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from logging import Logger
-from telegram.ext import Application
+from typing import Generic, TypeVar
 
-from typing import TypeVar, Generic
+from telegram.ext import Application
 
 T = TypeVar("T", bound="TelegramHandler")
 
@@ -13,5 +13,5 @@ class TelegramHandler(Generic[T], ABC):
         self.integration = integration
 
     @abstractmethod
-    async def register_telegram_commands(self, application: Application):
+    async def register_telegram_commands(self, application: Application) -> None:
         pass
